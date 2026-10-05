@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fantasy FRC League</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#e9edf3;--panel:#fff;--ink:#101a2b;--mute:#5b677a;--line:#d3dae5;--blue:#0d47b8;--red:#d62839;--gold:#f0b400}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1626;--panel:#172238;--ink:#eef2f9;--mute:#9aa8c0;--line:#2a3855;--blue:#6ea0ff;--red:#ff6b78;--gold:#ffc933}}
+:root[data-theme="dark"]{--bg:#0e1626;--panel:#172238;--ink:#eef2f9;--mute:#9aa8c0;--line:#2a3855;--blue:#6ea0ff;--red:#ff6b78;--gold:#ffc933}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.45 Barlow,system-ui,sans-serif}
+header{background:var(--blue);color:#fff;padding:22px 16px 0}
+:root[data-theme="dark"] header,:root:not([data-theme="light"]) header{}
+h1{font:800 clamp(34px,8vw,56px)/1 "Barlow Condensed",Impact,sans-serif;margin:0;letter-spacing:.5px}
+header p{margin:4px 0 14px;opacity:.85}
+nav{display:flex;gap:4px;overflow-x:auto}
+nav button{font:600 18px "Barlow Condensed",sans-serif;border:0;background:transparent;color:#fff;opacity:.7;padding:10px 16px;cursor:pointer;border-bottom:4px solid transparent}
+nav button[aria-selected=true]{opacity:1;border-color:var(--gold)}
+nav button:focus-visible{outline:2px solid #fff}
+main{max-width:860px;margin:0 auto;padding:16px}
+.row{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--blue);border-radius:4px;margin-bottom:8px}
+.row.r1{border-left-color:var(--gold)}
+.hd{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:12px 14px;cursor:pointer;width:100%;border:0;background:none;color:inherit;text-align:left;font:inherit}
+.rk{font:800 34px "Barlow Condensed",sans-serif;color:var(--mute)}.r1 .rk{color:var(--gold)}
+.nm{font:800 24px "Barlow Condensed",sans-serif}
+.bar{height:6px;background:var(--line);border-radius:3px;margin-top:4px}.bar i{display:block;height:100%;background:var(--red);border-radius:3px}
+.pt{font:800 30px "Barlow Condensed",sans-serif}
+.det{padding:0 14px 12px;display:none}.open .det{display:block}
+.chip{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.chip b{font-weight:600}.mute{color:var(--mute);font-size:14px}
+.tag{font-size:12px;padding:1px 6px;border-radius:3px;background:var(--gold);color:#101a2b;margin-left:6px}
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line)}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line)}th{font:600 16px "Barlow Condensed",sans-serif;color:var(--mute)}
+td.n,th.n{text-align:right}.wrap{overflow-x:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+label{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);padding:8px 12px;border-radius:4px}
+input{width:64px;font:inherit;padding:4px;border:1px solid var(--line);border-radius:3px;background:var(--bg);color:var(--ink);text-align:right}
+button{font:600 15px Barlow,sans-serif;background:var(--blue);color:#fff;border:0;border-radius:3px;padding:6px 10px;cursor:pointer;margin:6px 6px 0 0}button:disabled{opacity:.4;cursor:default}nav button{background:transparent}
+h2{font:800 26px "Barlow Condensed",sans-serif;margin:8px 0 12px}
+</style></head><body>
+<div id="gate" style="position:fixed;inset:0;z-index:9;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px"><form onsubmit="event.preventDefault();join(document.getElementById('code').value)" style="max-width:380px;width:100%"><h1 style="color:var(--blue)">Fantasy FRC League</h1><p>Enter your league's draft code. Everyone using the same code sees the same draft. A new code starts a new league.</p><input id="code" autocomplete="off" placeholder="Draft code" style="width:100%;font-size:18px;padding:10px;text-align:left"><p id="gerr" class="mute" style="color:var(--red)"></p><button type="submit" style="font-size:18px;padding:10px 18px">Join league</button></form></div>
+<header><h1>Fantasy FRC League</h1><p id="ev"></p><p><button id="sw" style="background:rgba(255,255,255,.2)">Switch league</button></p>
+<nav role="tablist"><button role="tab" data-t="s">Standings</button><button role="tab" data-t="p">Live draft</button><button role="tab" data-t="d">EPA board</button><button role="tab" data-t="t">All teams</button><button role="tab" data-t="k">Scoring</button><button role="tab" data-t="e">Event</button></nav></header>
+<main id="m"></main>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const BASE={"teams":[{"n":1540,"name":"Flaming Chickens","qw":6,"qt":0,"rp":22,"rank":24,"al":"Picked","pw":0,"champ":false,"award":"No award","pts":67},{"n":1678,"name":"Citrus Circuits","qw":5,"qt":0,"rp":22,"rank":23,"al":"Picked","pw":2,"champ":false,"award":"No award","pts":74},{"n":1868,"name":"Space Cookies","qw":3,"qt":0,"rp":19,"rank":30,"al":"Not Picked","pw":0,"champ":false,"award":"Other award","pts":47},{"n":2046,"name":"Bear Metal","qw":4,"qt":0,"rp":19,"rank":29,"al":"Picked","pw":0,"champ":false,"award":"Other award","pts":60},{"n":2073,"name":"EagleForce","qw":2,"qt":0,"rp":21,"rank":25,"al":"Picked","pw":1,"champ":false,"award":"Other award","pts":63},{"n":254,"name":"The Cheesy Poofs","qw":8,"qt":0,"rp":35,"rank":4,"al":"Picked","pw":3,"champ":false,"award":"Other award","pts":127},{"n":2813,"name":"Gear Heads","qw":7,"qt":0,"rp":32,"rank":7,"al":"Picked","pw":3,"champ":false,"award":"No award","pts":107},{"n":2910,"name":"Jack in the Bot","qw":10,"qt":0,"rp":38,"rank":2,"al":"Picked","pw":5,"champ":true,"award":"Other award","pts":178},{"n":3045,"name":"Gear Gremlins","qw":3,"qt":0,"rp":19,"rank":31,"al":"Not Picked","pw":0,"champ":false,"award":"No award","pts":42},{"n":3256,"name":"WarriorBorgs","qw":6,"qt":0,"rp":25,"rank":16,"al":"Picked","pw":3,"champ":false,"award":"No award","pts":88},{"n":359,"name":"Hawaiian Kids","qw":4,"qt":0,"rp":19,"rank":33,"al":"Picked","pw":1,"champ":false,"award":"No award","pts":60},{"n":3847,"name":"Spectrum   -\u25b3\u25c5","qw":5,"qt":0,"rp":24,"rank":19,"al":"Picked","pw":0,"champ":false,"award":"No award","pts":68},{"n":4270,"name":"Crusaders","qw":5,"qt":0,"rp":20,"rank":28,"al":"Not Picked","pw":0,"champ":false,"award":"No award","pts":50},{"n":4414,"name":"HighTide","qw":9,"qt":0,"rp":38,"rank":1,"al":"Picked","pw":5,"champ":true,"award":"Other award","pts":178},{"n":4499,"name":"The Highlanders","qw":4,"qt":0,"rp":17,"rank":36,"al":"Not Picked","pw":0,"champ":false,"award":"No award","pts":41},{"n":4698,"name":"Raider Robotics","qw":7,"qt":0,"rp":31,"rank":9,"al":"Picked","pw":0,"champ":false,"award":"No award","pts":88},{"n":5026,"name":"Iron Panthers","qw":7,"qt":0,"rp":31,"rank":8,"al":"Picked","pw":2,"champ":false,"award":"No award","pts":99},{"n":5199,"name":"Robot Dolphins From Outer Space","qw":4,"qt":0,"rp":25,"rank":15,"al":"Picked","pw":0,"champ":false,"award":"No award","pts":67},{"n":5507,"name":"Robotic Eagles","qw":7,"qt":0,"rp":27,"rank":12,"al":"Picked","pw":0,"champ":false,"award":"No award","pts":80},{"n":581,"name":"Blazing Bulldogs","qw":7,"qt":0,"rp":33,"rank":6,"al":"Picked","pw":3,"champ":false,"award":"Other award","pts":116},{"n":5940,"name":"BREAD","qw":9,"qt":0,"rp":35,"rank":5,"al":"Picked","pw":1,"champ":false,"award":"No award","pts":113},{"n":6017,"name":"PrepaTec - Cyberius","qw":5,"qt":0,"rp":23,"rank":20,"al":"Not Picked","pw":0,"champ":false,"award":"No award","pts":56},{"n":6036,"name":"Peninsula Robotics","qw":2,"qt":0,"rp":12,"rank":41,"al":"Not Picked","pw":0,"champ":false,"award":"No award","pts":25},{"n":604,"name":"Quixilver","qw":5,"qt":0,"rp":24,"rank":17,"al":"Picked","pw":0,"champ":false,"award":"No award","pts":68},{"n":6238,"name":"Popcorn Penguins","qw":5,"qt":0,"rp":21,"rank":27,"al":"Not Picked","pw":0,"champ":false,"award":"No award","pts":52},{"n":6647,"name":"PrepaTec - VOLTEC","qw":1,"qt":0,"rp":7,"rank":42,"al":"Not Picked","pw":0,"champ":false,"award":"No award","pts":12},{"n":6665,"name":"C-Otters","qw":6,"qt":0,"rp":23,"rank":21,"al":"Picked","pw":2,"champ":false,"award":"No award","pts":79},{"n":6800,"name":"Valor","qw":6,"qt":0,"rp":29,"rank":10,"al":"Picked","pw":3,"champ":false,"award":"No award","pts":96},{"n":687,"name":"The Nerd Herd","qw":2,"qt":0,"rp":13,"rank":40,"al":"Not Picked","pw":0,"champ":false,"award":"No award","pts":27},{"n":694,"name":"StuyPulse","qw":3,"qt":0,"rp":22,"rank":22,"al":"Picked","pw":3,"champ":false,"award":"Other award","pts":78},{"n":8229,"name":"Balikbayan Bots","qw":3,"qt":0,"rp":14,"rank":39,"al":"Not Picked","pw":0,"champ":false,"award":"No award","pts":32},{"n":841,"name":"The BioMechs","qw":4,"qt":0,"rp":28,"rank":18,"al":"Not Picked","pw":0,"champ":false,"award":"Other award","pts":68},{"n":846,"name":"The Funky Monkeys","qw":4,"qt":0,"rp":19,"rank":32,"al":"Not Picked","pw":0,"champ":false,"award":"Other award","pts":50},{"n":9023,"name":"Future Martians","qw":7,"qt":0,"rp":26,"rank":13,"al":"Picked","pw":4,"champ":true,"award":"Other award","pts":128},{"n":9032,"name":"RoboWhales","qw":1,"qt":0,"rp":14,"rank":38,"al":"Picked","pw":1,"champ":false,"award":"No award","pts":41},{"n":9128,"name":"ITKAN Robotics","qw":4,"qt":0,"rp":18,"rank":35,"al":"Picked","pw":1,"champ":false,"award":"No award","pts":58},{"n":9408,"name":"Warren Warbots","qw":9,"qt":0,"rp":37,"rank":3,"al":"Picked","pw":1,"champ":false,"award":"Other award","pts":126},{"n":9470,"name":"Ctrl-Alt-Defeat","qw":3,"qt":0,"rp":17,"rank":37,"al":"Picked","pw":0,"champ":false,"award":"No award","pts":48},{"n":9496,"name":"LYNK","qw":4,"qt":0,"rp":25,"rank":14,"al":"Picked","pw":1,"champ":false,"award":"No award","pts":72},{"n":971,"name":"Spartan Robotics","qw":6,"qt":0,"rp":27,"rank":11,"al":"Picked","pw":0,"champ":false,"award":"No award","pts":77},{"n":972,"name":"Iron Claw","qw":3,"qt":0,"rp":18,"rank":34,"al":"Not Picked","pw":0,"champ":false,"award":"Other award","pts":45},{"n":973,"name":"Greybots","qw":4,"qt":0,"rp":21,"rank":26,"al":"Picked","pw":0,"champ":false,"award":"No award","pts":59}],"sk":{"Qual match win":3,"Qual match tie":1,"Ranking Point (RP) earned":2,"Alliance captain":10,"Picked into alliance":5,"Not picked / missed eliminations":-5,"Playoff match win":5,"Event champion":25,"Major award (Impact / Chairman's)":20,"Engineering Inspiration":15,"Other award":5,"No award":0},"rb":{"1":15,"2":12,"3":10,"4":8,"5":6,"6":4,"7":2,"8":1},"owners":[{"o":"Oscar","t":[1540,2073,3045,4270]},{"o":"Terry","t":[1678,254,3256,4414]},{"o":"Dan","t":[1868,2813,359,4499]},{"o":"Arnold","t":[2046,2910,3847,4698]},{"o":"Leo","t":[6238,8229,9408,5026]},{"o":"Justin","t":[6647,841,9470,5199]},{"o":"Andy","t":[6665,846,9496,5507]},{"o":"Logan","t":[6800,9023,971,581]},{"o":"Ethan","t":[687,9032,972,5940]},{"o":"Derek","t":[694,9128,973,6017]}],"epa":{"1540":206.9,"4414":356.9,"1678":278.2,"254":328,"1868":197,"2910":281.8,"2046":259.9,"9470":278.9,"2073":168.8,"6800":267.6,"2813":198.2,"9128":264.8,"3045":213.7,"9496":253.6,"3256":194.3,"581":251.8,"359":233.4,"3847":157.6,"4499":230.1,"4270":119.1,"973":229.3,"694":228.8,"604":222.4,"4698":202.5,"9023":215.8,"5026":190.3,"5199":171.7,"5507":131.4,"5940":202.1,"6017":140.2,"6036":195.6,"971":195.6,"6238":128.8,"6647":193.5,"6665":46.9,"841":190.5,"687":167.8,"9408":185,"9032":183.6,"8229":134.3,"846":162.6,"972":136.6},"event":"2026cc"};
+let D=BASE,S,byN;function setD(d){D=d;S=d.sk;byN={};d.teams.forEach(t=>byN[t.n]=t)}setD(BASE);let msg='';
+const K={qw:'Qual match win',qt:'Qual match tie',rp:'Ranking Point (RP) earned',cap:'Alliance captain',pick:'Picked into alliance',np:'Not picked / missed eliminations',pw:'Playoff match win',ch:'Event champion',maj:"Major award (Impact / Chairman's)",ei:'Engineering Inspiration',oth:'Other award'};
+function pts(t){let p=t.qw*S[K.qw]+t.qt*S[K.qt]+t.rp*S[K.rp]+t.pw*S[K.pw];
+ p+=t.al=='Captain'?S[K.cap]:t.al=='Picked'?S[K.pick]:S[K.np];
+ if(t.champ)p+=S[K.ch];const a=t.award||'';
+ p+=/major|impact|chairman/i.test(a)?S[K.maj]:/engineering/i.test(a)?S[K.ei]:/other/i.test(a)?S[K.oth]:0;
+ return p+(D.rb[t.rank]||0)}
+let picks=[],db=null,armed=0,cfg=null;
+const pad=i=>'p'+String(i).padStart(3,'0');
+const DEF=()=>({owners:D.owners.map((o,i)=>({id:'o'+i,name:o.o})),rounds:4});
+const L=()=>cfg&&cfg.owners?cfg:DEF();
+const nameOf=id=>{const x=L().owners.find(y=>y.id==id);return x?x.name:id};
+function owners(){return L().owners.map(x=>{const i=+x.id.slice(1);return{o:x.name,t:picks.length?picks.filter(p=>p.o==x.id).map(p=>p.n):(x.id[0]=='o'&&D.owners[i]?D.owners[i].t:[])}})}
+function clock(i){const a=L().owners,N=a.length,r=Math.floor(i/N),k=i%N;return a[r%2?N-1-k:k].id}
+function save(f){const c=JSON.parse(JSON.stringify(L()));f(c);const mx=Math.max(1,Math.floor(Object.keys(D.epa).length/c.owners.length));c.rounds=Math.min(mx,Math.max(1,c.rounds|0));if(db)db.doc('config/league').set(c).catch(()=>{})}
+function pick(n){const i=picks.length;if(!db||i>=L().owners.length*L().rounds||picks.some(p=>p.n==n))return;db.doc('picks/'+pad(i)).set({n:n,o:clock(i),i:i}).catch(()=>{})}
+let tab='s',open={};
+const e=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function view(){document.getElementById('ev').textContent='Event '+D.event+' · '+L().owners.length+' owners · '+D.teams.length+' teams';const m=document.getElementById('m');let h='';const O=owners(),own={};O.forEach(o=>o.t.forEach(n=>own[n]=o.o));
+ if(tab=='s'){const L=O.map(o=>({o:o.o,ts:o.t.map(n=>byN[n]).filter(Boolean),p:0}));
+  L.forEach(x=>x.p=x.ts.reduce((a,t)=>a+pts(t),0));L.sort((a,b)=>b.p-a.p);const mx=Math.max(1,L[0].p);
+  L.forEach((x,i)=>{h+=`<div class="row ${i?'':'r1'} ${open[x.o]?'open':''}"><button class="hd" data-o="${e(x.o)}"><span class="rk">${i+1}</span><span><span class="nm">${e(x.o)}</span><div class="bar"><i style="width:${x.p/mx*100}%"></i></div></span><span class="pt">${x.p}</span></button><div class="det">`+
+   x.ts.sort((a,b)=>pts(b)-pts(a)).map(t=>`<div class="chip"><span><b>${t.n}</b> ${e(t.name)}${t.champ?'<span class="tag">Champion</span>':''}<div class="mute">Rank ${t.rank} · ${t.qw} qual wins · ${t.pw} playoff wins</div></span><b>${pts(t)}</b></div>`).join('')+`</div></div>`})}
+ if(tab=='p'){const l=L(),N=l.owners.length,R=l.rounds,tot=N*R,i=picks.length,done=i>=tot,tk=new Set(picks.map(p=>p.n));
+  h=`<h2>${done?'Draft complete':'On the clock: '+e(nameOf(clock(i)))}</h2><p class="mute">${done?'Every roster is filled. Check Standings.':'Round '+(Math.floor(i/N)+1)+' of '+R+', pick '+(i+1)+' of '+tot+'. Snake order: the order reverses each round.'}</p>`;
+  if(!db)h+='<p class="mute">Drafting is off in this view. Enter your draft code first.</p>';
+  if(picks.length)h+='<div class="row" style="padding:8px 14px">'+picks.slice(-5).reverse().map(p=>`<div class="chip"><span><b>${p.n}</b> ${e(byN[p.n]?byN[p.n].name:'')}</span><span class="mute">${e(nameOf(p.o))} · pick ${p.i+1}</span></div>`).join('')+`<button id="undo" ${db?'':'disabled'}>Undo last pick</button> <button id="reset" ${db?'':'disabled'}>${armed?'Click again to clear the draft':'Reset draft'}</button></div>`;
+  h+='<h2>Available teams</h2><div class="wrap"><table><tr><th>Team</th><th class="n">EPA</th><th></th></tr>'+Object.entries(D.epa).filter(([n])=>!tk.has(+n)).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<tr><td><b>${n}</b> ${e(byN[n]?byN[n].name:'')}</td><td class="n">${v}</td><td class="n"><button data-pick="${n}" ${db&&!done?'':'disabled'}>Draft for ${e(done?'':nameOf(clock(i)))}</button></td></tr>`).join('')+'</table></div>';
+  const lk=picks.length>0;
+  h+='<h2>League setup</h2><p class="mute">'+(lk?'The draft has started. You can rename owners. To add or remove owners or change the number of teams, reset the draft first.':'List the owners in draft order and set how many teams each one drafts.')+'</p><div class="grid">'+l.owners.map((x,j)=>`<label><input class="ni" data-id="${x.id}" value="${e(x.name)}" maxlength="24" style="width:100%;text-align:left" aria-label="Owner ${j+1} name">${lk||!db?'':`<button data-rm="${x.id}">Remove</button>`}</label>`).join('')+'</div>'+(lk||!db?'':`<button id="add">Add owner</button><button id="shuf">Shuffle order</button><label style="display:inline-flex;margin-top:6px">Teams each <input id="rounds" type="number" min="1" max="10" value="${R}"></label>`)}
+ if(tab=='e'){h='<h2>Event '+e(D.event)+'</h2><p class="mute">'+D.teams.length+' teams loaded. To switch events, change the event key in Excel, refresh Power Query, enter the new team numbers on Team Stats, save, then upload the workbook here. Importing replaces the event data and clears the current draft for everyone.</p><label>Workbook (.xlsx) <input type="file" id="wb" accept=".xlsx" style="width:auto"></label><p class="mute">'+e(msg)+'</p>'+(db?'':'<p class="mute">Importing is off in this view. Enter your draft code first.</p>')}
+ if(tab=='d'){h='<h2>Season EPA, best to worst</h2><div class="wrap"><table><tr><th>#</th><th>Team</th><th class="n">EPA</th><th>Drafted by</th></tr>'+
+  Object.entries(D.epa).sort((a,b)=>b[1]-a[1]).map(([n,v],i)=>`<tr><td>${i+1}</td><td><b>${n}</b> ${e(byN[n]?byN[n].name:'')}</td><td class="n">${v}</td><td>${own[n]?e(own[n]):'<span class="mute">Available</span>'}</td></tr>`).join('')+'</table></div>'}
+ if(tab=='t'){h='<h2>Every team, by fantasy points</h2><div class="wrap"><table><tr><th>Team</th><th class="n">Rank</th><th class="n">W</th><th class="n">RP</th><th class="n">Playoff W</th><th class="n">Pts</th></tr>'+
+  D.teams.slice().sort((a,b)=>pts(b)-pts(a)).map(t=>`<tr><td><b>${t.n}</b> ${e(t.name)}</td><td class="n">${t.rank}</td><td class="n">${t.qw}</td><td class="n">${t.rp}</td><td class="n">${t.pw}</td><td class="n"><b>${pts(t)}</b></td></tr>`).join('')+'</table></div>'}
+ if(tab=='k'){h='<h2>Point values</h2><p class="mute">Change a value and every score updates.</p><div class="grid">'+Object.entries(K).map(([k,l])=>`<label>${e(l)}<input type="number" data-k="${k}" value="${S[l]}"></label>`).join('')+'</div>'}
+ m.innerHTML=h;
+ document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t==tab))}
+document.querySelector('nav').onclick=x=>{if(x.target.dataset.t){tab=x.target.dataset.t;view()}};
+document.getElementById('m').onclick=x=>{if(x.target.dataset.rm&&db){save(c=>{c.owners=c.owners.filter(o=>o.id!=x.target.dataset.rm)});return}
+ if(x.target.id=='add'&&db){save(c=>{c.owners.push({id:'n'+Math.random().toString(36).slice(2,7),name:'Owner '+(c.owners.length+1)})});return}
+ if(x.target.id=='shuf'&&db){save(c=>{c.owners.sort(()=>Math.random()-.5)});return}
+ const pk=x.target.closest('[data-pick]');if(pk){pick(+pk.dataset.pick);return}
+ if(x.target.id=='undo'&&db&&picks.length){db.doc('picks/'+pad(picks.length-1)).delete().catch(()=>{});return}
+ if(x.target.id=='reset'&&db){if(!armed){armed=1;view();return}armed=0;picks.forEach(p=>db.doc('picks/'+pad(p.i)).delete().catch(()=>{}));return}
+ const b=x.target.closest('.hd');if(b){open[b.dataset.o]=!open[b.dataset.o];view()}};
+function doImport(buf){try{const wb=XLSX.read(buf,{type:'array'}),g=n=>XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:null});
+ const ts=g('Team Stats'),hi=ts.findIndex(r=>r[0]=='Team #'),teams=[];
+ ts.slice(hi+1).forEach(r=>{if(typeof r[0]=='number')teams.push({n:r[0],name:r[1],qw:r[2]||0,qt:r[3]||0,rp:r[4]||0,rank:r[5],al:r[6],pw:r[7]||0,champ:r[8]=='Y',award:r[9],pts:r[10]})});
+ if(hi<0||!teams.length){msg='Could not find team rows on the Team Stats sheet.';view();return}
+ const sk={},rb={};g('Scoring Key').forEach(r=>{if(typeof r[0]=='number'&&typeof r[1]=='number')rb[r[0]]=r[1];else if(r[0]&&typeof r[1]=='number')sk[r[0]]=r[1]});
+ const dr=g('Draft & Roster'),oi=dr.findIndex(r=>r[0]=='Owner'),owners=[],epa={};
+ for(const r of dr.slice(oi+1)){if(!r[0]||r[1]==null)break;owners.push({o:String(r[0]),t:r.slice(1,7).filter(x=>typeof x=='number')})}
+ dr.slice(oi+1).forEach(r=>{if(typeof r[10]=='number'&&typeof r[12]=='number')epa[r[10]]=Math.round(r[12]*10)/10;if(typeof r[16]=='number'&&typeof r[18]=='number')epa[r[16]]=Math.round(r[18]*10)/10});
+ if(!owners.length){msg='Could not find owners on the Draft & Roster sheet.';view();return}
+ db.doc('event/data').set({teams,sk:Object.entries(sk),rb,owners,epa,event:String((ts[0]||[])[1]||'')});
+ picks.forEach(p=>db.doc('picks/'+pad(p.i)).delete().catch(()=>{}));db.doc('config/league').delete().catch(()=>{});
+ msg='Imported '+teams.length+' teams from '+((ts[0]||[])[1]||'the workbook')+'.';view()}catch(err){msg='That file could not be read as the league workbook.';view()}}
+document.getElementById('m').onchange=x=>{const t=x.target;
+ if(t.id=='wb'&&t.files[0]){if(!db||typeof XLSX=='undefined'){msg='Importing is unavailable in this view.';view();return}t.files[0].arrayBuffer().then(doImport);return}
+ if(!db)return;
+ if(t.classList.contains('ni'))save(c=>{const o=c.owners.find(y=>y.id==t.dataset.id);if(o)o.name=t.value.trim()||o.name});
+ if(t.id=='rounds')save(c=>{c.rounds=+t.value})};
+document.getElementById('m').oninput=x=>{const k=x.target.dataset.k;if(k){S[K[k]]=+x.target.value||0}};
+document.getElementById('ev').textContent='Event '+D.event+' · '+D.owners.length+' owners · '+D.teams.length+' teams';
+view();
+const FB={apiKey:"AIzaSyBAAc9EkhzWiPZfkUojZEwr0iAQ0clsAcM",projectId:"fantasy-frc-league",databaseURL:"https://fantasy-frc-league-default-rtdb.firebaseio.com"};
+function fail(){const g=document.getElementById('gate');g.style.display='flex';document.getElementById('gerr').textContent='Could not connect. Check the database rules and your internet connection.'}
+function norm(d){d.sk=Object.fromEntries(Object.values(d.sk));d.owners=Object.values(d.owners).map(o=>({o:o.o,t:Object.values(o.t||[])}));d.teams=Object.values(d.teams);return d}
+const shim=r=>({doc:p=>({set:d=>r.child(p).set(d),delete:()=>r.child(p).remove(),onSnapshot:f=>r.child(p).on('value',s=>f({exists:s.exists(),data:()=>s.val()}),fail)}),
+ collection:p=>({onSnapshot:f=>r.child(p).on('value',s=>{const docs=[];s.forEach(c=>{const v=c.val();docs.push({data:()=>v})});f({docs})},fail)})});
+function join(code){code=String(code).trim().toLowerCase().replace(/[.#$\[\]\/\s]/g,'-');if(!code)return;
+ try{localStorage.setItem('ffrc-code',code)}catch(e){}
+ try{firebase.initializeApp(FB);const d=shim(firebase.database().ref('leagues/'+code));db=d;document.getElementById('gate').style.display='none';document.getElementById('sw').textContent='League: '+code+' (switch)';d.doc('event/data').onSnapshot(s=>{setD(s.exists?norm(s.data()):BASE);if(tab!='k')view()},()=>{});d.doc('config/league').onSnapshot(s=>{cfg=s.exists?s.data():null;if(tab!='k')view()},()=>{});d.collection('picks').onSnapshot(s=>{picks=s.docs.map(x=>x.data()).sort((a,b)=>a.i-b.i);armed=0;if(tab!='k')view()},()=>{})}catch(e){fail()}}
+document.getElementById('sw').onclick=()=>{try{localStorage.removeItem('ffrc-code')}catch(e){}location.reload()};
+let saved='';try{saved=localStorage.getItem('ffrc-code')||''}catch(e){}
+if(saved)join(saved);
+</script></body></html>
